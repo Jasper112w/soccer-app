@@ -4214,6 +4214,26 @@ matches.forEach(function(match) {
     }
 });
 
+
+db['teams'].forEach(function(team) {
+    team.wins = 0;
+    team.lost = 0;
+    team.ties = 0;
+});
+
+db['matches'].forEach(function(match) {
+    var winner = match['winnerTeamId'];
+    if(winner) {
+        var loser = (match['teamIds'].indexOf(winner) === 0) ? 1 : 0;
+        db['teams'][winner - 1].wins++;
+        db['teams'][loser].lost++;
+    } else {
+        db['teams'][match['teamIds'][0] - 1].ties++;
+        db['teams'][match['teamIds'][1] - 1].ties++;
+
+    }
+});
+
 var Team = React.createClass({
     getInitialState: function() {
         return {
@@ -4225,6 +4245,8 @@ var Team = React.createClass({
         return (
             <tr>
                 <td>{this.props.team.name}</td>
+                <td><img className="teamLogo" src={this.props.team.logoUrl}/></td>
+                <td>{this.props.team.rank}</td>
                 <td>{this.props.team.wins}</td>
                 <td>{this.props.team.lost}</td>
                 <td>{this.props.team.ties}</td>
@@ -4233,76 +4255,76 @@ var Team = React.createClass({
     }
 });
 
-var TeamList = React.createClass({
-    getInitialState: function() {
-        return {
-            teams: []
-        };
-    },
+// var TeamList = React.createClass({
+//     getInitialState: function() {
+//         return {
+//             teams: []
+//         };
+//     },
 
-    componentDidMount: function() {
-        console.log('props url: '+this.props.url);
-        $.get(this.props.url, function(result) {
-            var self = this;
+//     componentDidMount: function() {
+//         console.log('props url: '+this.props.url);
+//         $.get(this.props.url, function(result) {
+//             var self = this;
 
-            if (this.isMounted()) {
-                this.setState(function() {
-                    this.teams = result['teams'];
-                    this.teams.forEach(function(team) {
-                        team.wins = 0;
-                        team.lost = 0;
-                        team.ties = 0;
-                        team.outcome = 0;
-                    });
+//             if (this.isMounted()) {
+//                 this.setState(function() {
+//                     this.teams = result['teams'];
+//                     this.teams.forEach(function(team) {
+//                         team.wins = 0;
+//                         team.lost = 0;
+//                         team.ties = 0;
+//                         team.outcome = 0;
+//                     });
 
-                    result['matches'].forEach(function(match) {
-                        var winner = match['winnerTeamId'];
-                        if(winner) {
-                            var loser = (match['teamIds'].indexOf(winner) === 0) ? 1 : 0;
-                            self.teams[winner - 1].wins++;
-                            self.teams[loser].lost++;
-                        } else {
-                            self.teams[match['teamIds'][0] - 1].ties++;
-                            self.teams[match['teamIds'][1] - 1].ties++;
+//                     result['matches'].forEach(function(match) {
+//                         var winner = match['winnerTeamId'];
+//                         if(winner) {
+//                             var loser = (match['teamIds'].indexOf(winner) === 0) ? 1 : 0;
+//                             self.teams[winner - 1].wins++;
+//                             self.teams[loser].lost++;
+//                         } else {
+//                             self.teams[match['teamIds'][0] - 1].ties++;
+//                             self.teams[match['teamIds'][1] - 1].ties++;
 
-                        }
-                    });
+//                         }
+//                     });
 
-                    return {
-                        teams: this.teams 
-                    }
-                });
+//                     return {
+//                         teams: this.teams 
+//                     }
+//                 });
 
-            }
-        }.bind(this));
-    },
-    render: function() {
-        var rows = [];
-        var self = this;
+//             }
+//         }.bind(this));
+//     },
+//     render: function() {
+//         var rows = [];
+//         var self = this;
 
-        teams = teams.sort(function(a, b) {
-          return a.wins - b.wins;
-        });
-        console.log('teams: ',teams);
-        this.state.teams.forEach(function(team) {
-            rows.push(<Team team = {team} />)
-        });
+//         teams = teams.sort(function(a, b) {
+//           return a.wins - b.wins;
+//         });
 
-        return (
-            <table>
-                <thead>
-                    <tr>
-                        <th>Team</th>
-                        <th>W</th>
-                        <th>L</th>
-                        <th>T</th>
-                    </tr>
-                </thead>
-                <tbody>{rows}</tbody>
-            </table>
-        );
-    }
-});
+//         this.state.teams.forEach(function(team) {
+//             rows.push(<Team team = {team} />)
+//         });
+
+//         return (
+//             <table>
+//                 <thead>
+//                     <tr>
+//                         <th>Team</th>
+//                         <th>W</th>
+//                         <th>L</th>
+//                         <th>T</th>
+//                     </tr>
+//                 </thead>
+//                 <tbody>{rows}</tbody>
+//             </table>
+//         );
+//     }
+// });
 
 // React.render(
 //     <TeamList url = {'https://futbol-api.goguardian.com/db'} />,
@@ -4310,21 +4332,18 @@ var TeamList = React.createClass({
 // );
 
 var LeagueView = React.createClass({
-    getInitialState: function() {
-        return {
-            teams: []
-        };
-    },
     render: function() {
         var rows = [];
+        
         teams = this.props.teams.sort(function(a, b) {
           return b.outcome - a.outcome;
         });
-        console.log('teams: ', teams);
+        
         this.props.teams.forEach(function(team, index) {
+            team.rank = index+1;
             rows.push(
                 <tr>
-                    <td>{team.name}</td><td>{index + 1}</td><td>{team.outcome}</td>
+                    <td>{team.name}</td><td>{team.rank}</td><td>{team.outcome}</td>
                 </tr>
             );
         });
@@ -4339,10 +4358,44 @@ var LeagueView = React.createClass({
                         <th>Outcome</th>
                     </tr>
                 </thead>
-                <tbody>{rows}</tbody>
+                <tbody>
+                  {rows}
+                  <tr>
+                    <TeamView teams = {teams} />
+                  </tr>
+                </tbody>
+                
             </table>
+
         );
     }
+});
+
+var TeamView = React.createClass({
+  render: function() {
+    // stats win/loss ratio, current ranking in league, team logo, team name, game and their outcomes, 
+    // roster for the team(player name, player postion, player picture)
+    var rows = [];
+    this.props.teams.forEach(function(team) {
+        rows.push(<Team team = {team} />)
+    });
+    return (
+      <table>
+          <thead>
+          <tr><td><b>Team View</b></td></tr>
+              <tr>
+                  <th>Team</th>
+                  <th></th>
+                  <th>Ranking</th>
+                  <th>W</th>
+                  <th>L</th>
+                  <th>T</th>
+              </tr>
+          </thead>
+          <tbody>{rows}</tbody>
+      </table>  
+    );
+  }
 });
 
 React.render(
