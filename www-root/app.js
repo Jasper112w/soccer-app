@@ -4279,7 +4279,11 @@ var TeamList = React.createClass({
     render: function() {
         var rows = [];
         var self = this;
-        
+
+        teams = teams.sort(function(a, b) {
+          return a.wins - b.wins;
+        });
+        console.log('teams: ',teams);
         this.state.teams.forEach(function(team) {
             rows.push(<Team team = {team} />)
         });
@@ -4306,12 +4310,21 @@ var TeamList = React.createClass({
 // );
 
 var LeagueView = React.createClass({
+    getInitialState: function() {
+        return {
+            teams: []
+        };
+    },
     render: function() {
         var rows = [];
-        this.props.teams.forEach(function(team) {
+        teams = this.props.teams.sort(function(a, b) {
+          return b.outcome - a.outcome;
+        });
+        console.log('teams: ', teams);
+        this.props.teams.forEach(function(team, index) {
             rows.push(
                 <tr>
-                    <td>{team.name}</td><td>1</td><td>{team.outcome}</td>
+                    <td>{team.name}</td><td>{index + 1}</td><td>{team.outcome}</td>
                 </tr>
             );
         });
