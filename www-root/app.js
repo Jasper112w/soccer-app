@@ -4240,11 +4240,13 @@ var Team = React.createClass({
             currentPosition: null
         };
     },
-
+    handleClick: function() {
+      console.log('clicked');
+    },
     render: function() {
         return (
             <tr>
-                <td>{this.props.team.name}</td>
+                <td onClick={this.handleClick}>{this.props.team.name}</td>
                 <td><img className="teamLogo" src={this.props.team.logoUrl}/></td>
                 <td>{this.props.team.rank}</td>
                 <td>{this.props.team.wins}</td>
@@ -4255,85 +4257,20 @@ var Team = React.createClass({
     }
 });
 
-// var TeamList = React.createClass({
-//     getInitialState: function() {
-//         return {
-//             teams: []
-//         };
-//     },
-
-//     componentDidMount: function() {
-//         console.log('props url: '+this.props.url);
-//         $.get(this.props.url, function(result) {
-//             var self = this;
-
-//             if (this.isMounted()) {
-//                 this.setState(function() {
-//                     this.teams = result['teams'];
-//                     this.teams.forEach(function(team) {
-//                         team.wins = 0;
-//                         team.lost = 0;
-//                         team.ties = 0;
-//                         team.outcome = 0;
-//                     });
-
-//                     result['matches'].forEach(function(match) {
-//                         var winner = match['winnerTeamId'];
-//                         if(winner) {
-//                             var loser = (match['teamIds'].indexOf(winner) === 0) ? 1 : 0;
-//                             self.teams[winner - 1].wins++;
-//                             self.teams[loser].lost++;
-//                         } else {
-//                             self.teams[match['teamIds'][0] - 1].ties++;
-//                             self.teams[match['teamIds'][1] - 1].ties++;
-
-//                         }
-//                     });
-
-//                     return {
-//                         teams: this.teams 
-//                     }
-//                 });
-
-//             }
-//         }.bind(this));
-//     },
-//     render: function() {
-//         var rows = [];
-//         var self = this;
-
-//         teams = teams.sort(function(a, b) {
-//           return a.wins - b.wins;
-//         });
-
-//         this.state.teams.forEach(function(team) {
-//             rows.push(<Team team = {team} />)
-//         });
-
-//         return (
-//             <table>
-//                 <thead>
-//                     <tr>
-//                         <th>Team</th>
-//                         <th>W</th>
-//                         <th>L</th>
-//                         <th>T</th>
-//                     </tr>
-//                 </thead>
-//                 <tbody>{rows}</tbody>
-//             </table>
-//         );
-//     }
-// });
-
-// React.render(
-//     <TeamList url = {'https://futbol-api.goguardian.com/db'} />,
-//     document.getElementById('content')
-// );
-
 var LeagueView = React.createClass({
+    getInitialState: function() {
+      return {currentTeam: {
+        name: <p>Select a team</p>
+      }};
+    },
+    handleClick: function(team) {
+      console.log('clicked ', team);
+      this.setState({currentTeam: team});
+      
+    },
     render: function() {
         var rows = [];
+        var self = this;
         
         teams = this.props.teams.sort(function(a, b) {
           return b.outcome - a.outcome;
@@ -4343,29 +4280,27 @@ var LeagueView = React.createClass({
             team.rank = index+1;
             rows.push(
                 <tr>
-                    <td>{team.name}</td><td>{team.rank}</td><td>{team.outcome}</td>
+                    <td onClick={self.handleClick.bind(self, team)}>{team.name}</td><td>{team.rank}</td><td>{team.outcome}</td>
                 </tr>
             );
         });
         return (
-            
-            <table>
-                <thead>
-                    <tr><td><b>League View</b></td></tr>
-                    <tr>
-                        <th>Team</th>
-                        <th>Rank</th>
-                        <th>Outcome</th>
-                    </tr>
-                </thead>
-                <tbody>
-                  {rows}
-                  <tr>
-                    <TeamView teams = {teams} />
-                  </tr>
-                </tbody>
-                
-            </table>
+            <div>
+              <table>
+                  <thead>
+                      <tr><td><b>League View</b></td></tr>
+                      <tr>
+                          <th>Team</th>
+                          <th>Rank</th>
+                          <th>Outcome</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                    {rows}
+                  </tbody>
+              </table>
+              <TeamView team={this.state.currentTeam}/>
+            </div>
 
         );
     }
@@ -4375,25 +4310,31 @@ var TeamView = React.createClass({
   render: function() {
     // stats win/loss ratio, current ranking in league, team logo, team name, game and their outcomes, 
     // roster for the team(player name, player postion, player picture)
-    var rows = [];
-    this.props.teams.forEach(function(team) {
-        rows.push(<Team team = {team} />)
-    });
+    console.log('team: ',this.props.team);
     return (
       <table>
           <thead>
           <tr><td><b>Team View</b></td></tr>
               <tr>
-                  <th>Team</th>
                   <th></th>
+                  <th>Team</th>
                   <th>Ranking</th>
                   <th>W</th>
                   <th>L</th>
                   <th>T</th>
               </tr>
           </thead>
-          <tbody>{rows}</tbody>
-      </table>  
+          <tbody>
+            <tr>
+              <td><img className="teamLogo" src={this.props.team.logoUrl}/></td>
+              <td>{this.props.team.name}</td>
+              <td>{this.props.team.rank}</td>
+              <td>{this.props.team.wins}</td>
+              <td>{this.props.team.lost}</td>
+              <td>{this.props.team.ties}</td>
+            </tr>
+          </tbody>
+      </table>
     );
   }
 });
